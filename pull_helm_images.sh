@@ -167,9 +167,10 @@ pull_and_save_image() {
         fi
     done
 
-    log_error "❌ Failed to pull image: $image after $retries attempts. Skipping."
+    log_error "❌ Failed to pull image: $image after $retries attempts. Exiting."
     FAILED_PULLS=$((FAILED_PULLS + 1))
     IMAGE_REPORT+=("$image|Failed to pull|-|-")
+    exit 1 # Exit if all attempts failed
 }
 
 # --- Print Final Report ---

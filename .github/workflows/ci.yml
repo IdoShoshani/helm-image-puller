@@ -5,25 +5,25 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Install Dependencies
+      - name: 🛠 Install Dependencies
         run: |
-          sudo apt-get update
-          echo "Installing ShellCheck"
-          sudo apt-get install -y shellcheck
-          echo "Installing Docker"
-          curl -fsSL https://get.docker.com -o get-docker.sh
-          sudo sh get-docker.sh
-          echo "Installing Helm"
-          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-          chmod 700 get_helm.sh
-          ./get_helm.sh
+          set -e
+          chmod +x install_deps.sh
+          ./install_deps.sh
 
       - name: Run ShellCheck (Linting)
         run: shellcheck pull_helm_images.sh
+
+      - name: Add Jenkins Helm Repo
+        run: |
+          set -e
+          helm repo add jenkins https://charts.jenkins.io
+          helm repo update
 
       - name: Test Script (Dry Run)
         run: |

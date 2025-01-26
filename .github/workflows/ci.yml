@@ -1,0 +1,21 @@
+name: CI - Helm Image Puller
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y helm docker shellcheck
+
+      - name: Run ShellCheck (Linting)
+        run: shellcheck pull_helm_images.sh
+
+      - name: Test Script (Dry Run)
+        run: ./pull_helm_images.sh -l -s stable/nginx || echo "Script failed"

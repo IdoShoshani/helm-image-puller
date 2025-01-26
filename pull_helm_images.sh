@@ -13,8 +13,9 @@ set -o pipefail
 HELM_CHART=""                     # Helm chart to process
 OUTPUT_DIR="$(pwd)/docker_images" # Directory where images will be saved
 
-# Flags to control behavior
+# --- Parse CLI Arguments ---
 PULL_IMAGES=false
+LIST_ONLY=false
 
 # --- Colors for Terminal Output ---
 GREEN=$(tput setaf 2)
@@ -195,8 +196,8 @@ print_report() {
 
 # --- Main Function ---
 main() {
-    # Validate we have a Helm chart if pulling images
-    if [ "$PULL_IMAGES" = true ] && [ -z "$HELM_CHART" ]; then
+    # Validate we have a Helm chart
+    if [ -z "$HELM_CHART" ]; then
         log_error "No Helm chart specified. Use -s to specify a chart."
         usage
     fi
@@ -204,31 +205,32 @@ main() {
     check_required_tools
     validate_output_dir
     check_docker_daemon
+    validate_helm_chart
+
+    log_step "Fetching images for Helm chart: $HELM_CHART"
+    IMAGES=($(extract_helm_images))
+
+    if [ "$LIST_ONLY" = true ]; then
+        printf "%s\n" "${IMAGES[@]}"
+        exit 0
+    fi
 
     if [ "$PULL_IMAGES" = true ]; then
-        validate_helm_chart
-        log_step "Fetching images for Helm chart: $HELM_CHART"
-
-        # Dynamically extract images from the Helm chart
-        IMAGES=($(extract_helm_images))
-
-        # Pull and save each image
         for image in "${IMAGES[@]}"; do
             pull_and_save_image "$image"
         done
-
-        # Print final statistics
         print_report
     else
-        log_info "No pull operation requested. Use -p and -s to pull images."
+        log_info "No pull operation requested. Use -p to pull images."
     fi
 }
 
 # --- Parse CLI Arguments ---
-while getopts ":ps:h" opt; do
+while getopts ":ps:lh" opt; do
     case "${opt}" in
     p) PULL_IMAGES=true ;;
     s) HELM_CHART="${OPTARG}" ;;
+    l) LIST_ONLY=true ;;
     h) usage ;;
     *) usage ;;
     esac

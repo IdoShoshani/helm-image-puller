@@ -1,0 +1,7 @@
+[34m==>(B[m Validating Helm chart: jenkins/jenkins
+[32m[INFO](B[m Helm chart validated successfully.
+[34m==>(B[m Fetching images for Helm chart: jenkins/jenkins
+docker.io/bats/bats:1.11.1
+docker.io/jenkins/jenkins:2.479.3-jdk17
+docker.io/kiwigrid/k8s-sidecar:1.29.0
+jenkins/inbound-agent:3283.v92c105e0f819-7

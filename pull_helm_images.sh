@@ -18,12 +18,21 @@ PULL_IMAGES=false
 LIST_ONLY=false
 
 # --- Colors for Terminal Output ---
-GREEN=$(tput setaf 2)
-RED=$(tput setaf 1)
-YELLOW=$(tput setaf 3)
-BLUE=$(tput setaf 4)
-CYAN=$(tput setaf 6)
-RESET=$(tput sgr0)
+if [ -t 1 ]; then
+    GREEN=$(tput setaf 2)
+    RED=$(tput setaf 1)
+    YELLOW=$(tput setaf 3)
+    BLUE=$(tput setaf 4)
+    CYAN=$(tput setaf 6)
+    RESET=$(tput sgr0)
+else
+    GREEN=""
+    RED=""
+    YELLOW=""
+    BLUE=""
+    CYAN=""
+    RESET=""
+fi
 
 # --- Logging & Output Helpers ---
 log_info() { echo "${GREEN}[INFO]${RESET} $*"; }

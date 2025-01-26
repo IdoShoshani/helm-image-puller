@@ -26,4 +26,6 @@ jobs:
         run: shellcheck pull_helm_images.sh
 
       - name: Test Script (Dry Run)
-        run: ./pull_helm_images.sh -l -s jenkins/jenkins || echo "Script failed" && exit 1
+        run: |
+          set -e
+          ./pull_helm_images.sh -l -s jenkins/jenkins

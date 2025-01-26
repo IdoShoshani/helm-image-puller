@@ -135,7 +135,8 @@ pull_and_save_image() {
     local attempt=0
 
     TOTAL_IMAGES=$((TOTAL_IMAGES + 1))
-    local start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
 
     log_step "Processing image: $image"
     log_info "Pulling $image..."
@@ -151,7 +152,7 @@ pull_and_save_image() {
             if docker save "$image" -o "$image_path"; then
                 SUCCESSFUL_SAVES=$((SUCCESSFUL_SAVES + 1))
                 local image_size
-                image_size=$(ls -lh "$image_path" | awk '{print $5}')
+                image_size=$(du -h "$image_path" | awk '{print $1}')
                 log_info "✅ Image saved successfully: $image_path"
                 IMAGE_REPORT+=("$image|Pulled|Saved|$image_size")
                 return
@@ -208,7 +209,10 @@ main() {
     validate_helm_chart
 
     log_step "Fetching images for Helm chart: $HELM_CHART"
-    IMAGES=($(extract_helm_images))
+    IMAGES=()
+    while IFS= read -r line; do
+        IMAGES+=("$line")
+    done < <(extract_helm_images)
 
     if [ "$LIST_ONLY" = true ]; then
         printf "%s\n" "${IMAGES[@]}"

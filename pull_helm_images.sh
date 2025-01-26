@@ -10,8 +10,8 @@ set -e
 set -o pipefail
 
 # --- Default Configurable Variables ---
-HELM_CHART=""                     # Helm chart to process
-OUTPUT_DIR="$(pwd)/docker_images" # Directory where images will be saved
+HELM_CHART=""                                    # Helm chart to process
+OUTPUT_DIR="${OUTPUT_DIR:-$(pwd)/docker_images}" # Directory where images will be saved
 
 # --- Parse CLI Arguments ---
 PULL_IMAGES=false
@@ -226,11 +226,12 @@ main() {
 }
 
 # --- Parse CLI Arguments ---
-while getopts ":ps:lh" opt; do
+while getopts ":ps:o:lh" opt; do
     case "${opt}" in
     p) PULL_IMAGES=true ;;
     s) HELM_CHART="${OPTARG}" ;;
     l) LIST_ONLY=true ;;
+    o) OUTPUT_DIR="${OPTARG}" ;;
     h) usage ;;
     *) usage ;;
     esac

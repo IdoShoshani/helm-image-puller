@@ -12,6 +12,8 @@ set -o pipefail
 # --- Default Configurable Variables ---
 HELM_CHART=""                                    # Helm chart to process
 OUTPUT_DIR="${OUTPUT_DIR:-$(pwd)/docker_images}" # Directory where images will be saved
+FAIL_THRESHOLD=3                                 # Maximum allowed cumulative failures (pull or save) before exiting
+FAIL_ON_THRESHOLD=true                           # If true, the script will exit when the threshold is reached; set to false with -k to continue regardless
 
 # --- Parse CLI Arguments ---
 PULL_IMAGES=false
@@ -49,6 +51,7 @@ Options:
   -p             Pull & save images (requires -s with a valid Helm chart).
   -s <chart>     Specify Helm chart name or path to extract images from.
   -h             Display this help message.
+  -k             Continue processing even if failure threshold is reached.
 
 Example:
   $0 -p -s prometheus-community/kube-prometheus-stack
@@ -134,6 +137,16 @@ SUCCESSFUL_SAVES=0
 FAILED_SAVES=0
 IMAGE_REPORT=()
 
+# --- Check Failure Threshold ---
+check_failure_threshold() {
+    local failed_total=$((FAILED_PULLS + FAILED_SAVES))
+    if [ "$FAIL_ON_THRESHOLD" = true ] && [ "$failed_total" -ge "$FAIL_THRESHOLD" ]; then
+        log_error "Failure threshold reached: $failed_total failures. Exiting."
+        print_report
+        exit 1
+    fi
+}
+
 # --- Pull and Save an Image ---
 pull_and_save_image() {
     local image="$1"
@@ -178,10 +191,10 @@ pull_and_save_image() {
         fi
     done
 
-    log_error "❌ Failed to pull image: $image after $retries attempts. Exiting."
+    log_error "❌ Failed to pull image: $image after $retries attempts."
     FAILED_PULLS=$((FAILED_PULLS + 1))
     IMAGE_REPORT+=("$image|Failed to pull|-|-")
-    exit 1 # Exit if all attempts failed
+    return
 }
 
 # --- Print Final Report ---
@@ -231,6 +244,7 @@ main() {
     if [ "$PULL_IMAGES" = true ]; then
         for image in "${IMAGES[@]}"; do
             pull_and_save_image "$image"
+            check_failure_threshold
         done
         print_report
     else
@@ -239,12 +253,13 @@ main() {
 }
 
 # --- Parse CLI Arguments ---
-while getopts ":ps:o:lh" opt; do
+while getopts ":ps:o:lhk" opt; do
     case "${opt}" in
     p) PULL_IMAGES=true ;;
     s) HELM_CHART="${OPTARG}" ;;
     l) LIST_ONLY=true ;;
     o) OUTPUT_DIR="${OPTARG}" ;;
+    k) FAIL_ON_THRESHOLD=false ;; # Option to continue processing even if failure threshold is reached
     h) usage ;;
     *) usage ;;
     esac
